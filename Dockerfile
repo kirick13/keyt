@@ -1,5 +1,6 @@
 
 FROM       oven/bun:0.6.7
+RUN        mkdir -p /app/state
 WORKDIR    /app
 COPY       src .
 COPY       cli.sh /usr/local/bin/keyt

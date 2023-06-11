@@ -1,9 +1,6 @@
 
 version: '3.7'
 
-volumes:
-  keyt-state:
-
 services:
   keyt-dev:
     container_name: keyt-dev
@@ -16,6 +13,3 @@ services:
       - type: bind
         source: ~/
         target: /bind
-      - type: volume
-        source: keyt-state
-        target: /app/state

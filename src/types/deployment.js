@@ -50,6 +50,10 @@ export async function applyDeployment(deployment_name) {
 
 	const k8s_deployment_containers = [];
 	const k8s_deployment_image_pull_secrets = [];
+	const k8s_deployment_pod_spec = {
+		containers: k8s_deployment_containers,
+		imagePullSecrets: k8s_deployment_image_pull_secrets,
+	};
 	const k8s_deployment = {
 		apiVersion: 'apps/v1',
 		kind: 'Deployment',
@@ -72,10 +76,7 @@ export async function applyDeployment(deployment_name) {
 						app: deployment_name,
 					},
 				},
-				spec: {
-					containers: k8s_deployment_containers,
-					imagePullSecrets: k8s_deployment_image_pull_secrets,
-				},
+				spec: k8s_deployment_pod_spec,
 			},
 		},
 	};
@@ -97,6 +98,11 @@ export async function applyDeployment(deployment_name) {
 			ports: k8s_service_ports,
 		},
 	};
+
+	// nodes
+	if (deployment_config.nodes !== null) {
+		k8s_deployment_pod_spec.nodeSelector = deployment_config.nodes;
+	}
 
 	// imagePullSecrets
 	if (deployment_config.docker.imagePullSecrets !== null) {

@@ -1,8 +1,11 @@
 {
 	"private": true,
 	"type": "module",
+	"engines": {
+		"node": ">=14.0.0"
+	},
 	"dependencies": {
-		"oh-my-props": "3.0.0-beta.7",
+		"oh-my-props": "3.0.0-beta.10",
 		"yaml": "^2.3.1"
 	},
 	"devDependencies": {

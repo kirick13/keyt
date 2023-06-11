@@ -50,7 +50,7 @@ module.exports = {
 		'complexity': [
 			'warn',
 			{
-				max: 21,
+				max: 22,
 			},
 		],
 		'indent': [

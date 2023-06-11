@@ -3,7 +3,6 @@ import { createObjectValidator } from 'oh-my-props';
 
 import { NAME_REGEXP,
          FQDN_WILDCARD_REGEXP } from '../consts.js';
-import { hasOwnProperty }       from '../utils.js';
 
 const PATH_START_REGEXP = /^=?\//;
 
@@ -25,13 +24,13 @@ export default createObjectValidator({
 		values: {
 			type: Object,
 			validator(value) {
-				if (hasOwnProperty(value, 'target')) {
-					return hasOwnProperty(value, 'paths') === false;
+				if (hasOwnProperty.call(value, 'target')) {
+					return hasOwnProperty.call(value, 'paths') === false;
 				}
 
-				if (hasOwnProperty(value, 'paths')) {
-					return hasOwnProperty(value, 'target') === false
-						&& hasOwnProperty(value, 'targetPort') === false;
+				if (hasOwnProperty.call(value, 'paths')) {
+					return hasOwnProperty.call(value, 'target') === false
+						&& hasOwnProperty.call(value, 'targetPort') === false;
 				}
 
 				return false;
