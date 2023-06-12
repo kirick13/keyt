@@ -1,8 +1,9 @@
 
+import { KeytDeploymentIncompleteError } from '../errors.js';
 import { API_METHODS,
-         setK8SResource }  from '../k8s-api.js';
-import { readPodConfig }   from '../types/pod.js';
-import deploymentValidator from '../validators/deployment.js';
+         setK8SResource }                from '../k8s-api.js';
+import { readPodConfig }                 from '../types/pod.js';
+import deploymentValidator               from '../validators/deployment.js';
 
 function getPath(name) {
 	return `/app/state/deployment/${name}.json`;
@@ -32,17 +33,28 @@ export async function applyDeployment(deployment_name) {
 	let pod_config;
 
 	try {
-		[
-			deployment_config,
-			pod_config,
-		] = await Promise.all([
-			readDeploymentConfig(deployment_name),
-			readPodConfig(deployment_name),
-		]);
+		deployment_config = await readDeploymentConfig(deployment_name);
 	}
 	catch (error) {
 		if (error.code === 'ENOENT') {
-			throw new Error(`Deployment ${deployment_name} not found. Do not worry, it is OK if you have not applied both deployment and pod config yet.`);
+			throw new KeytDeploymentIncompleteError(
+				KeytDeploymentIncompleteError.MISSING_DEPLOYMENT,
+				deployment_name,
+			);
+		}
+
+		throw error;
+	}
+
+	try {
+		pod_config = await readPodConfig(deployment_name);
+	}
+	catch (error) {
+		if (error.code === 'ENOENT') {
+			throw new KeytDeploymentIncompleteError(
+				KeytDeploymentIncompleteError.MISSING_POD,
+				deployment_name,
+			);
 		}
 
 		throw error;
