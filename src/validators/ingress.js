@@ -15,6 +15,16 @@ export default createObjectValidator({
 		type: String,
 		validator: (value) => NAME_REGEXP.test(value),
 	},
+	annotations: {
+		type: Object,
+		optional: true,
+		keys: {
+			type: String,
+		},
+		values: {
+			type: String,
+		},
+	},
 	rules: {
 		type: Object,
 		keys: {

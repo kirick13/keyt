@@ -22,6 +22,10 @@ export function applyIngress(config) {
 		},
 	};
 
+	if (config.annotations !== null) {
+		k8s_ingress.metadata.annotations = config.annotations;
+	}
+
 	const tls_by_secrets = new Map();
 
 	for (const [ host, { tlsSecret: tls_secret, target, targetPort, paths }] of Object.entries(config.rules)) {
