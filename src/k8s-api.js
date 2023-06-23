@@ -24,32 +24,44 @@ async function getToken() {
 }
 
 export async function callAPI(method, path, body) {
-	const token = await getToken();
+	const url = new URL(path, 'https://host.docker.internal:16443');
+	const headers = new Headers();
 
-	const fetch_init = {
-		method,
-		headers: {
-			Authorization: `Bearer ${token}`,
-		},
-	};
+	if (process.env.K8S_HOST) {
+		url.hostname = process.env.K8S_HOST;
+	}
+
+	const token = ('K8S_TOKEN' in process.env) ? process.env.K8S_TOKEN : (await getToken());
+	headers.set(
+		'Authorization',
+		`Bearer ${token}`,
+	);
 
 	switch (method) {
 		case 'GET':
+			body = undefined;
 			break;
 		case 'POST':
 		case 'PUT':
-			fetch_init.headers['Content-Type'] = 'application/json';
-			fetch_init.body = JSON.stringify(body);
+			headers.set(
+				'Content-Type',
+				'application/json',
+			);
+			body = JSON.stringify(body);
 			break;
 		default:
 			throw new Error(`Unknown method: ${method}`);
 	}
 
-	const url = new URL(path, 'https://k8s.local:16443');
-
 	return fetch(
-		url,
-		fetch_init,
+		new Request(
+			url,
+			{
+				method,
+				headers,
+				body,
+			},
+		),
 	);
 }
 

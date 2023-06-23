@@ -15,6 +15,6 @@ export class KeytDeploymentIncompleteError extends Error {
 			throw new Error('Unknown type giden to KeytDeploymentIncompleteError constructor.');
 		}
 
-		super(`No ${message_start} config for deployment ${deployment_name} was found. Do not worry, it is OK if you have not applied both deployment and pod config yet.`);
+		super(`No ${message_start} config for deployment "${deployment_name}" was found. Do not worry, it is OK if you have not applied both deployment and pod config yet.`);
 	}
 }

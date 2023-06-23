@@ -145,7 +145,12 @@ export async function applyDeployment(deployment_name) {
 				container_image = container_image.replace('$', images_namespace);
 			}
 
-			if (container_image.includes(':') === false) {
+			if (
+				container_image.includes(':') === false
+				|| (
+					container_image.indexOf(':') < container_image.indexOf('/')
+				)
+			) {
 				container_image += ':' + deployment_config.docker.imagesTag;
 
 				if (
