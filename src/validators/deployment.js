@@ -1,9 +1,12 @@
 
-import { OhMyPropsObjectValidator,
-         OhMyPropsMultiValidator } from 'oh-my-props';
+import {
+	OhMyPropsObjectValidator,
+	OhMyPropsMultiValidator } from 'oh-my-props';
 
-import { NAME_REGEXP,
-         ENV_KEY_REGEXP } from '../consts.js';
+import {
+	DASHED_WORD_REGEXP,
+	NAME_REGEXP,
+	ENV_KEY_REGEXP } from '../consts.js';
 
 export default new OhMyPropsObjectValidator({
 	kind: {
@@ -64,7 +67,7 @@ export default new OhMyPropsObjectValidator({
 					},
 					key: {
 						type: String,
-						validator: (value) => NAME_REGEXP.test(value),
+						validator: (value) => DASHED_WORD_REGEXP.test(value),
 					},
 				},
 				contentValidator: (value) => Number(value.valueFrom !== null) + Number(value.secretFrom !== null) === 1,
