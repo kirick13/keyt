@@ -1,5 +1,5 @@
 
-import { createValidator } from 'oh-my-props';
+import { OhMyPropsValidator } from 'oh-my-props';
 
 import { NAME_REGEXP }              from '../consts.js';
 import { validateDeploymentConfig } from '../types/deployment.js';
@@ -12,7 +12,7 @@ const KINDS = new Set([
 	'Ingress',
 ]);
 
-const validator = createValidator({
+const validator = new OhMyPropsValidator({
 	type: Object,
 	entries: {
 		kind: {

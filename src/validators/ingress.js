@@ -1,12 +1,12 @@
 
-import { createObjectValidator } from 'oh-my-props';
+import { OhMyPropsObjectValidator } from 'oh-my-props';
 
 import { NAME_REGEXP,
          FQDN_WILDCARD_REGEXP } from '../consts.js';
 
 const PATH_START_REGEXP = /^=?\//;
 
-export default createObjectValidator({
+export default new OhMyPropsObjectValidator({
 	kind: {
 		type: String,
 		validator: (value) => value === 'Ingress',

@@ -1,10 +1,10 @@
 
-import { createObjectValidator } from 'oh-my-props';
+import { OhMyPropsObjectValidator } from 'oh-my-props';
 
 import { NAME_REGEXP,
          ENV_KEY_REGEXP } from '../consts.js';
 
-export default createObjectValidator({
+export default new OhMyPropsObjectValidator({
 	kind: {
 		type: String,
 		validator: (value) => value === 'Pod',

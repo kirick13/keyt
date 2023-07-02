@@ -1,11 +1,11 @@
 
-import { createObjectValidator,
-         createMultiTypeValidator } from 'oh-my-props';
+import { OhMyPropsObjectValidator,
+         OhMyPropsMultiValidator } from 'oh-my-props';
 
 import { NAME_REGEXP,
          ENV_KEY_REGEXP } from '../consts.js';
 
-export default createObjectValidator({
+export default new OhMyPropsObjectValidator({
 	kind: {
 		type: String,
 		validator: (value) => value === 'Deployment',
@@ -45,7 +45,7 @@ export default createObjectValidator({
 			type: String,
 			validator: (value) => ENV_KEY_REGEXP.test(value),
 		},
-		values: createMultiTypeValidator(
+		values: new OhMyPropsMultiValidator(
 			{
 				type: String,
 			},
