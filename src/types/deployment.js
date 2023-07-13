@@ -1,12 +1,20 @@
 
 import { KeytDeploymentIncompleteError } from '../errors.js';
-import { API_METHODS,
-         setK8SResource }                from '../k8s-api.js';
-import { readPodConfig }                 from '../types/pod.js';
+import {
+	API_METHODS,
+	setK8SResource }                     from '../k8s-api.js';
+import {
+	readPodConfig,
+	applyPod     }                       from '../types/pod.js';
+import {
+	getK8SServiceConfig,
+	sendServiceToK8s   }                 from '../types/service.js';
 import deploymentValidator               from '../validators/deployment.js';
 
+export const DEPLOYMENT_RESOURCE_TYPE = 'deployment';
+
 function getPath(name) {
-	return `/app/state/deployment/${name}.json`;
+	return `/app/state/${DEPLOYMENT_RESOURCE_TYPE}/${name}.json`;
 }
 
 export function validateDeploymentConfig(config) {
@@ -47,7 +55,10 @@ export async function applyDeployment(deployment_name) {
 	}
 
 	try {
-		pod_config = await readPodConfig(deployment_name);
+		pod_config = await readPodConfig(
+			deployment_name,
+			DEPLOYMENT_RESOURCE_TYPE,
+		);
 	}
 	catch (error) {
 		if (error.code === 'ENOENT') {
@@ -65,6 +76,7 @@ export async function applyDeployment(deployment_name) {
 	const k8s_deployment_pod_spec = {
 		containers: k8s_deployment_containers,
 		imagePullSecrets: k8s_deployment_image_pull_secrets,
+		volumes: [],
 	};
 	const k8s_deployment = {
 		apiVersion: 'apps/v1',
@@ -93,23 +105,14 @@ export async function applyDeployment(deployment_name) {
 		},
 	};
 
-	const k8s_service_ports = [];
-	const k8s_service = {
-		apiVersion: 'v1',
-		kind: 'Service',
-		metadata: {
-			name: deployment_name,
-			labels: {
-				app: deployment_name,
-			},
-		},
-		spec: {
-			selector: {
-				app: deployment_name,
-			},
-			ports: k8s_service_ports,
-		},
-	};
+	const {
+		k8s_service,
+		k8s_service_ports,
+	} = getK8SServiceConfig(deployment_name);
+
+	// if (Object.keys(deployment_config.ports).length > 0) {
+	// 	k8s_service.spec.type = 'LoadBalancer';
+	// }
 
 	// nodes
 	if (deployment_config.nodes !== null) {
@@ -125,115 +128,39 @@ export async function applyDeployment(deployment_name) {
 		}
 	}
 
-	for (const [ container_name, container_spec ] of Object.entries(pod_config.containers)) {
-		const k8s_deployment_container = {
-			name: container_name,
-			imagePullPolicy: 'Always',
-		};
-
-		// image
-		{
-			let container_image = container_spec.image;
-			const is_image_name_dynamic = container_image.startsWith('$');
-
-			if (is_image_name_dynamic) {
-				const images_namespace = deployment_config.docker.imagesNamespace;
-				if (typeof images_namespace !== 'string') {
-					throw new TypeError(`Pod for deployment ${deployment_name} requested docker images namespace, but deployment config does not contain it.`);
-				}
-
-				container_image = container_image.replace('$', images_namespace);
-			}
-
-			if (
-				container_image.includes(':') === false
-				|| (
-					container_image.indexOf(':') < container_image.indexOf('/')
-				)
-			) {
-				container_image += ':' + deployment_config.docker.imagesTag;
-
-				if (
-					is_image_name_dynamic
-					&& typeof pod_config.imagesTagSuffix === 'string'
-				) {
-					container_image += '-' + pod_config.imagesTagSuffix;
-				}
-			}
-
-			k8s_deployment_container.image = container_image;
-		}
-
-		// ports
-		for (const port of container_spec.ports) {
-			k8s_deployment_container.ports ??= [];
-			k8s_deployment_container.ports.push({
-				containerPort: port,
-			});
-
-			k8s_service_ports.push({
-				protocol: 'TCP',
-				port,
-				targetPort: port,
+	// volumes
+	for (const [ volume_name, volume ] of Object.entries(deployment_config.volumes)) {
+		if (volume.valueFrom !== null) {
+			k8s_deployment_pod_spec.volumes.push({
+				name: volume_name,
+				configMap: {
+					name: volume.valueFrom,
+				},
 			});
 		}
-
-		// env
-		for (const [ env_name, env_value ] of Object.entries(container_spec.env)) {
-			k8s_deployment_container.env ??= [];
-			k8s_deployment_container.env.push({
-				name: env_name,
-				value: env_value,
+		// eslint-disable-next-line unicorn/no-negated-condition
+		else if (volume.secretFrom !== null) {
+			k8s_deployment_pod_spec.volumes.push({
+				name: volume_name,
+				secret: {
+					secretName: volume.secretFrom,
+				},
 			});
 		}
-
-		// envExpect
-		for (const env_name of container_spec.envExpect) {
-			k8s_deployment_container.env ??= [];
-
-			const env_value_definition = deployment_config.env[env_name];
-			if (env_value_definition === undefined) {
-				throw new Error(`Pod for deployment ${deployment_name} requested environment variable ${env_name}, but deployment config does not contain it.`);
-			}
-
-			// string
-			if (typeof env_value_definition === 'string') {
-				k8s_deployment_container.env.push({
-					name: env_name,
-					value: env_value_definition,
-				});
-			}
-			// object
-			else {
-				const { valueFrom, secretFrom, key } = env_value_definition;
-
-				if (valueFrom !== null) {
-					k8s_deployment_container.env.push({
-						name: env_name,
-						valueFrom: {
-							configMapKeyRef: {
-								name: valueFrom,
-								key,
-							},
-						},
-					});
-				}
-				else if (secretFrom !== null) {
-					k8s_deployment_container.env.push({
-						name: env_name,
-						valueFrom: {
-							secretKeyRef: {
-								name: secretFrom,
-								key,
-							},
-						},
-					});
-				}
-			}
+		else {
+			throw new Error('Invalid volume configuration.');
 		}
-
-		k8s_deployment_containers.push(k8s_deployment_container);
 	}
+
+	k8s_deployment_containers.push(
+		...applyPod({
+			resource_name: deployment_name,
+			resource_type: DEPLOYMENT_RESOURCE_TYPE,
+			resource_config: deployment_config,
+			pod_config,
+			k8s_service_ports,
+		}),
+	);
 
 	await Promise.all([
 		sendDeploymentToK8s(
@@ -241,6 +168,7 @@ export async function applyDeployment(deployment_name) {
 			k8s_deployment,
 		),
 		sendServiceToK8s(
+			DEPLOYMENT_RESOURCE_TYPE,
 			deployment_name,
 			k8s_service,
 		),
@@ -255,14 +183,4 @@ async function sendDeploymentToK8s(name, k8s_config) {
 	);
 
 	console.log(`Deployment "${name}" ${result ? 'created' : 'updated'}.`);
-}
-
-async function sendServiceToK8s(name, k8s_config) {
-	const result = await setK8SResource(
-		API_METHODS.SERVICE,
-		name,
-		k8s_config,
-	);
-
-	console.log(`Service for deployment "${name}" ${result ? 'created' : 'updated'}.`);
 }

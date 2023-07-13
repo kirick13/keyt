@@ -4,3 +4,4 @@ export const NAME_REGEXP = /^[a-z](?:[\da-z-]*[\da-z])?$/;
 export const FQDN_REGEXP = /^[\da-z](?:[\d_a-z-]*[\da-z])?(?:\.[\da-z](?:[\d_a-z-]*[\da-z])?)*$/;
 export const FQDN_WILDCARD_REGEXP = /^(?:\*\.)?[\da-z](?:[\d_a-z-]*[\da-z])?(?:\.[\da-z](?:[\d_a-z-]*[\da-z])?)*$/;
 export const ENV_KEY_REGEXP = /^[A-Z][\dA-Z_]*$/;
+export const NUMBER_UINT_REGEXP = /^[1-9]\d*$/;

@@ -3,10 +3,8 @@ import { mkdir } from 'node:fs/promises';
 
 try {
 	await Promise.all([
-		// mkdir('/app/state/config_map'),
 		mkdir('/app/state/deployment'),
-		// mkdir('/app/state/ingress'),
-		// mkdir('/app/state/secret'),
+		mkdir('/app/state/daemon-set'),
 	]);
 }
 catch (error) {

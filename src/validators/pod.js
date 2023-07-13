@@ -52,6 +52,18 @@ export default new OhMyPropsObjectValidator({
 						validator: (value) => ENV_KEY_REGEXP.test(value),
 					},
 				},
+				volumesExpect: {
+					type: Object,
+					default: () => ({}),
+					keys: {
+						type: String,
+						validator: (value) => NAME_REGEXP.test(value),
+					},
+					values: {
+						type: String,
+						validator: (value) => value.length > 0 && value[0] === '/',
+					},
+				},
 			},
 		},
 	},

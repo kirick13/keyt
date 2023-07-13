@@ -3,6 +3,7 @@ import YAML from 'yaml';
 
 export const API_METHODS = {
 	DEPLOYMENT: '/apis/apps/v1/namespaces/default/deployments',
+	DAEMON_SET: '/apis/apps/v1/namespaces/default/daemonsets',
 	SERVICE: '/api/v1/namespaces/default/services',
 	INGRESS: '/apis/networking.k8s.io/v1/namespaces/default/ingresses',
 	// CONFIG_MAP: '/api/v1/namespaces/default/configmaps',
@@ -102,5 +103,7 @@ export async function setK8SResource(method_prefix, name, config) {
 		}
 	}
 
+	console.error(response);
+	console.error(await response.text());
 	throw new Error(`Unknown response status: ${response.status}`);
 }

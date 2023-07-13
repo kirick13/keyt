@@ -14,16 +14,11 @@ import volumesValidator from './parts/volumes.js';
 export default new OhMyPropsObjectValidator({
 	kind: {
 		type: String,
-		validator: (value) => value === 'Deployment',
+		validator: (value) => value === 'DaemonSet',
 	},
 	name: {
 		type: String,
 		validator: (value) => NAME_REGEXP.test(value),
-	},
-	replicas: {
-		type: Number,
-		default: 1,
-		validator: (value) => value > 0,
 	},
 	docker: {
 		type: Object,
@@ -82,7 +77,6 @@ export default new OhMyPropsObjectValidator({
 			},
 		),
 	},
-	volumes: volumesValidator,
 	ports: {
 		type: Object,
 		default: () => ({}),
@@ -95,6 +89,7 @@ export default new OhMyPropsObjectValidator({
 			validator: (value) => value > 0,
 		},
 	},
+	volumes: volumesValidator,
 	nodes: {
 		type: Object,
 		optional: true,

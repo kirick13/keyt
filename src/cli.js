@@ -3,24 +3,33 @@ import YAML from 'yaml';
 
 import { NAME_REGEXP }                   from './consts.js';
 import { KeytDeploymentIncompleteError } from './errors.js';
-import { saveDeploymentConfig,
-         applyDeployment     }           from './types/deployment.js';
+import {
+	DAEMON_SET_RESOURCE_TYPE,
+	saveDaemonSetConfig,
+	applyDaemonSet          }            from './types/daemon-set.js';
+import {
+	DEPLOYMENT_RESOURCE_TYPE,
+	saveDeploymentConfig,
+	applyDeployment         }            from './types/deployment.js';
 import { applyIngress }                  from './types/ingress.js';
-import { savePodConfig,
-         patchPodConfig }                from './types/pod.js';
+import {
+	savePodConfig,
+	patchPodConfig }                     from './types/pod.js';
 import validateConfig                    from './validators/main.js';
+
+const POD_RESOURCE_TYPES = new Set([
+	DEPLOYMENT_RESOURCE_TYPE,
+	DAEMON_SET_RESOURCE_TYPE,
+]);
 
 try {
 	const args = process.argv.slice(2);
 
-	// keyt apply deployment.yaml
-	// keyt apply pod.yaml --deployment <name>
-	// keyt apply ingress.yaml
-
-	const POD_APPLICATIONS = new Set([ 'deployment' ]);
-
 	const arg0 = args.shift();
 	switch (arg0) {
+		// keyt apply deployment.yaml
+		// keyt apply pod.yaml --deployment <name>
+		// keyt apply ingress.yaml
 		case 'apply': {
 			const filename = args.shift();
 			if (filename === undefined) {
@@ -39,26 +48,39 @@ try {
 
 			switch (config.kind) {
 				case 'Pod': {
-					const application_type = args.shift()?.slice(2);
-					if (POD_APPLICATIONS.has(application_type) === false) {
-						throw new Error(`Invalid pod application type: ${application_type}`);
+					const resource_type = args.shift()?.slice(2);
+					if (POD_RESOURCE_TYPES.has(resource_type) === false) {
+						throw new Error(`Invalid pod resource type: ${resource_type}`);
 					}
 
-					const deployment_name = args.shift();
-					if (NAME_REGEXP.test(deployment_name) === false) {
-						throw new Error('Invalid deployment name');
+					const resource_name = args.shift();
+					if (NAME_REGEXP.test(resource_name) === false) {
+						throw new Error(`Invalid ${resource_type.replaceAll(/-(.)/g, (_, letter) => letter.toUpperCase())} name: ${resource_name}`);
 					}
 
 					await savePodConfig(
 						config,
-						deployment_name,
+						resource_name,
+						resource_type,
 					);
 
-					await applyDeployment(deployment_name);
+					switch (resource_type) {
+						case 'deployment':
+							await applyDeployment(resource_name);
+							break;
+						case 'daemon-set':
+							await applyDaemonSet(resource_name);
+							break;
+						// no default
+					}
 				} break;
 				case 'Deployment':
 					await saveDeploymentConfig(config);
 					await applyDeployment(config.name);
+					break;
+				case 'DaemonSet':
+					await saveDaemonSetConfig(config);
+					await applyDaemonSet(config.name);
 					break;
 				case 'Ingress':
 					await applyIngress(config);
@@ -66,9 +88,15 @@ try {
 				// no default
 			}
 		} break;
+		// keyt patch <resource-type> <resource-name> <key> <value>
 		case 'patch': {
-			const deployment_name = args.shift();
-			if (NAME_REGEXP.test(deployment_name) === false) {
+			const resource_type = args.shift();
+			if (POD_RESOURCE_TYPES.has(resource_type) === false) {
+				throw new Error(`Invalid pod resource type: ${resource_type}`);
+			}
+
+			const resource_name = args.shift();
+			if (NAME_REGEXP.test(resource_name) === false) {
 				throw new Error('Invalid deployment name');
 			}
 
@@ -85,12 +113,21 @@ try {
 			}
 
 			await patchPodConfig(
-				deployment_name,
+				resource_name,
+				resource_type,
 				patch_key,
 				patch_value,
 			);
 
-			await applyDeployment(deployment_name);
+			switch (resource_type) {
+				case 'deployment':
+					await applyDeployment(resource_name);
+					break;
+				case 'daemon-set':
+					await applyDaemonSet(resource_name);
+					break;
+				// no default
+			}
 		} break;
 		case undefined:
 			console.error('No command given.');
