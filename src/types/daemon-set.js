@@ -13,7 +13,7 @@ import daemonSetValidator              from '../validators/daemon-set.js';
 
 export const DAEMON_SET_RESOURCE_TYPE = 'daemon-set';
 
-function getPath(name) {
+export function getDaemonSetConfigPath(name) {
 	return `/app/state/${DAEMON_SET_RESOURCE_TYPE}/${name}.json`;
 }
 
@@ -23,14 +23,14 @@ export function validateDaemonSetConfig(config) {
 
 export async function saveDaemonSetConfig(config) {
 	Bun.write(
-		getPath(config.name),
+		getDaemonSetConfigPath(config.name),
 		JSON.stringify(config),
 	);
 }
 
 export async function readDaemonSetConfig(name) {
 	const file = Bun.file(
-		getPath(name),
+		getDaemonSetConfigPath(name),
 	);
 
 	return file.json();

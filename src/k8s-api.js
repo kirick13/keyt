@@ -1,6 +1,8 @@
 
 import YAML from 'yaml';
 
+import { KeytK8SAPIError } from './errors/k8s-api';
+
 export const API_METHODS = {
 	DEPLOYMENT: '/apis/apps/v1/namespaces/default/deployments',
 	DAEMON_SET: '/apis/apps/v1/namespaces/default/daemonsets',
@@ -40,6 +42,7 @@ export async function callAPI(method, path, body) {
 
 	switch (method) {
 		case 'GET':
+		case 'DELETE':
 			body = undefined;
 			break;
 		case 'POST':
@@ -103,7 +106,29 @@ export async function setK8SResource(method_prefix, name, config) {
 		}
 	}
 
-	console.error(response);
-	console.error(await response.text());
-	throw new Error(`Unknown response status: ${response.status}`);
+	const response_body = await response.json();
+
+	throw new KeytK8SAPIError(response_body.message);
+}
+
+export async function deleteK8SResource(method_prefix, name) {
+	const method = `${method_prefix}/${name}`;
+
+	if (typeof process.env.DRY_RUN === 'string') {
+		console.log(method);
+		return;
+	}
+
+	const response = await callAPI(
+		'DELETE',
+		method,
+	);
+
+	if (response.ok) {
+		return;
+	}
+
+	const response_body = await response.json();
+
+	throw new KeytK8SAPIError(response_body.message);
 }

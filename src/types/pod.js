@@ -1,7 +1,8 @@
 
-import podValidator from '../validators/pod.js';
+import { isPlainObject } from '../utils.js';
+import podValidator      from '../validators/pod.js';
 
-function getPath(resource_name, resource_type) {
+export function getPodConfigPath(resource_name, resource_type) {
 	return `/app/state/${resource_type}/${resource_name}.pod.json`;
 }
 
@@ -11,7 +12,7 @@ export function validatePodConfig(config) {
 
 export async function readPodConfig(resource_name, resource_type) {
 	const file = Bun.file(
-		getPath(
+		getPodConfigPath(
 			resource_name,
 			resource_type,
 		),
@@ -22,7 +23,7 @@ export async function readPodConfig(resource_name, resource_type) {
 
 export async function savePodConfig(config, resource_name, resource_type) {
 	Bun.write(
-		getPath(
+		getPodConfigPath(
 			resource_name,
 			resource_type,
 		),
@@ -126,12 +127,14 @@ export function applyPod({
 
 		// envExpect
 		for (const env_name of container_spec.envExpect) {
-			k8s_pod_container.env ??= [];
-
-			const env_value_definition = resource_config.env[env_name];
-			if (env_value_definition === undefined) {
+			if (resource_config.env[env_name] === undefined) {
 				throw new Error(`Pod for ${resource_type} ${resource_name} requested environment variable ${env_name}, but deployment config does not contain it.`);
 			}
+		}
+
+		// env from daemonset/deployment
+		for (const [ env_name, env_value_definition ] of Object.entries(resource_config.env)) {
+			k8s_pod_container.env ??= [];
 
 			// string
 			if (typeof env_value_definition === 'string') {
@@ -170,19 +173,21 @@ export function applyPod({
 		}
 
 		// volumesExpect
-		for (const [ volume_name, path ] of Object.entries(container_spec.volumesExpect)) {
-			k8s_pod_container.volumeMounts ??= [];
+		if (isPlainObject(container_spec.volumesExpect)) {
+			for (const [ volume_name, path ] of Object.entries(container_spec.volumesExpect)) {
+				k8s_pod_container.volumeMounts ??= [];
 
-			const volume_definition = resource_config.volumes[volume_name];
-			if (volume_definition === undefined) {
-				throw new Error(`Pod for ${resource_type} ${resource_name} requested volume ${volume_name}, but deployment config does not contain it.`);
+				const volume_definition = resource_config.volumes[volume_name];
+				if (volume_definition === undefined) {
+					throw new Error(`Pod for ${resource_type} ${resource_name} requested volume ${volume_name}, but deployment config does not contain it.`);
+				}
+
+				k8s_pod_container.volumeMounts.push({
+					name: volume_name,
+					mountPath: path,
+					readOnly: true,
+				});
 			}
-
-			k8s_pod_container.volumeMounts.push({
-				name: volume_name,
-				mountPath: path,
-				readOnly: true,
-			});
 		}
 
 		k8s_pod_containers.push(k8s_pod_container);

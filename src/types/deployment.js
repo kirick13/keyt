@@ -13,7 +13,7 @@ import deploymentValidator               from '../validators/deployment.js';
 
 export const DEPLOYMENT_RESOURCE_TYPE = 'deployment';
 
-function getPath(name) {
+export function getDeploymentConfigPath(name) {
 	return `/app/state/${DEPLOYMENT_RESOURCE_TYPE}/${name}.json`;
 }
 
@@ -23,14 +23,14 @@ export function validateDeploymentConfig(config) {
 
 export async function saveDeploymentConfig(config) {
 	Bun.write(
-		getPath(config.name),
+		getDeploymentConfigPath(config.name),
 		JSON.stringify(config),
 	);
 }
 
 export async function readDeploymentConfig(name) {
 	const file = Bun.file(
-		getPath(name),
+		getDeploymentConfigPath(name),
 	);
 
 	return file.json();
