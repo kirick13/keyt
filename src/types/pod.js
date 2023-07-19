@@ -100,9 +100,9 @@ export function applyPod({
 				containerPort: pod_port,
 			};
 
-			const external_port = resource_config.ports[pod_port] ?? pod_port;
-			if (typeof external_port === 'number') {
-				container_port.hostPort = external_port;
+			const host_port = resource_config.ports[pod_port];
+			if (typeof host_port === 'number') {
+				container_port.hostPort = host_port;
 			}
 
 			k8s_pod_container.ports ??= [];
