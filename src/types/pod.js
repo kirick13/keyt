@@ -96,12 +96,12 @@ export function applyPod({
 
 		// ports
 		for (const pod_port of container_spec.ports) {
-			const external_port = resource_config.ports[pod_port] ?? pod_port;
-
 			const container_port = {
 				containerPort: pod_port,
 			};
-			if (external_port !== pod_port) {
+
+			const external_port = resource_config.ports[pod_port] ?? pod_port;
+			if (typeof external_port === 'number') {
 				container_port.hostPort = external_port;
 			}
 
