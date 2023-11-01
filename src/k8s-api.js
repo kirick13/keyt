@@ -33,6 +33,9 @@ export async function callAPI(method, path, body) {
 	if (process.env.K8S_HOST) {
 		url.hostname = process.env.K8S_HOST;
 	}
+	if (process.env.K8S_PORT) {
+		url.port = process.env.K8S_PORT;
+	}
 
 	const token = ('K8S_TOKEN' in process.env) ? process.env.K8S_TOKEN : (await getToken());
 	headers.set(
