@@ -1,7 +1,7 @@
 #!/bin/sh
 
 DOCKER_IMAGE='kirickme/keyt'
-DOCKER_TAG='0.1.12-dev'
+DOCKER_TAG='0.1.14-dev'
 
 docker manifest inspect $DOCKER_IMAGE:$DOCKER_TAG >/dev/null 2>&1
 if [ $? -ne 0 ]; then
