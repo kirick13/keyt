@@ -1,5 +1,5 @@
 
-FROM       oven/bun:0.6.7
+FROM       oven/bun:1.0.25
 RUN        mkdir -p /app/state
 WORKDIR    /app
 COPY       src .

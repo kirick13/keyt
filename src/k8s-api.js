@@ -1,6 +1,5 @@
 
-import YAML from 'yaml';
-
+import YAML                from 'yaml';
 import { KeytK8SAPIError } from './errors/k8s-api';
 
 export const API_METHODS = {

@@ -49,7 +49,9 @@ catch (error) {
 		|| error instanceof KeytK8SAPIError
 	) {
 		console.error(error.message);
-		process.exitCode = 1;
+
+		// eslint-disable-next-line no-process-exit, unicorn/no-process-exit
+		process.exit(1);
 	}
 	else {
 		throw error;
