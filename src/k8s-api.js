@@ -29,6 +29,10 @@ export const {
 	K8S_HOST = 'host.docker.internal',
 	K8S_PORT = '16443',
 } = process.env;
+const {
+	DRY_RUN,
+	K8S_TOKEN,
+} = process.env;
 
 export async function callAPI(method, path, body) {
 	const url = new URL(path, 'https://i');
@@ -37,8 +41,7 @@ export async function callAPI(method, path, body) {
 
 	const headers = new Headers();
 
-	// eslint-disable-next-line unicorn/consistent-destructuring
-	const token = ('K8S_TOKEN' in process.env) ? process.env.K8S_TOKEN : (await getToken());
+	const token = ('K8S_TOKEN' in process.env) ? K8S_TOKEN : (await getToken());
 	headers.set(
 		'Authorization',
 		`Bearer ${token}`,
@@ -74,7 +77,7 @@ export async function callAPI(method, path, body) {
 export async function setK8SResource(method_prefix, name, config) {
 	const method = `${method_prefix}/${name}`;
 
-	if (typeof process.env.DRY_RUN === 'string') {
+	if (typeof DRY_RUN === 'string') {
 		console.log(method);
 		console.log(YAML.stringify(config));
 		return;
@@ -116,7 +119,7 @@ export async function setK8SResource(method_prefix, name, config) {
 export async function deleteK8SResource(method_prefix, name) {
 	const method = `${method_prefix}/${name}`;
 
-	if (typeof process.env.DRY_RUN === 'string') {
+	if (typeof DRY_RUN === 'string') {
 		console.log(method);
 		return;
 	}
