@@ -3,11 +3,15 @@ import commandApply                      from './commands/apply.js';
 import commandDelete					 from './commands/delete.js';
 import commandList                       from './commands/list.js';
 import commandPatch                      from './commands/patch.js';
+import commandPing                       from './commands/ping.js';
 import { KeytDeploymentIncompleteError } from './errors.js';
 import { KeytCommandError }              from './errors/command.js';
 import { KeytK8SAPIError } 			     from './errors/k8s-api.js';
 
 const COMMANDS = {
+	// keyt ping
+	ping: commandPing,
+
 	// keyt apply deployment.yaml
 	// keyt apply pod.yaml --deployment <name>
 	// keyt apply ingress.yaml

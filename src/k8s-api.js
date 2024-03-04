@@ -25,17 +25,19 @@ async function getToken() {
 	throw new Error('Can not read K8S API token.');
 }
 
+export const {
+	K8S_HOST = 'host.docker.internal',
+	K8S_PORT = '16443',
+} = process.env;
+
 export async function callAPI(method, path, body) {
-	const url = new URL(path, 'https://host.docker.internal:16443');
+	const url = new URL(path, 'https://i');
+	url.hostname = K8S_HOST;
+	url.port = K8S_PORT;
+
 	const headers = new Headers();
 
-	if (process.env.K8S_HOST) {
-		url.hostname = process.env.K8S_HOST;
-	}
-	if (process.env.K8S_PORT) {
-		url.port = process.env.K8S_PORT;
-	}
-
+	// eslint-disable-next-line unicorn/consistent-destructuring
 	const token = ('K8S_TOKEN' in process.env) ? process.env.K8S_TOKEN : (await getToken());
 	headers.set(
 		'Authorization',
@@ -60,14 +62,12 @@ export async function callAPI(method, path, body) {
 	}
 
 	return fetch(
-		new Request(
-			url,
-			{
-				method,
-				headers,
-				body,
-			},
-		),
+		url,
+		{
+			method,
+			headers,
+			body,
+		},
 	);
 }
 
