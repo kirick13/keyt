@@ -25,12 +25,10 @@ async function getToken() {
 	throw new Error('Can not read K8S API token.');
 }
 
-export const {
-	K8S_HOST = 'host.docker.internal',
-	K8S_PORT = '16443',
-} = process.env;
 const {
 	DRY_RUN,
+	K8S_HOST = 'host.docker.internal',
+	K8S_PORT = '16443',
 	K8S_TOKEN,
 } = process.env;
 
@@ -64,22 +62,39 @@ export async function callAPI(method, path, body) {
 			throw new Error(`Unknown method: ${method}`);
 	}
 
-	return fetch(
-		url,
-		{
-			method,
-			headers,
-			body,
-		},
-	);
+	try {
+		const response = await fetch(
+			url,
+			{
+				method,
+				headers,
+				body,
+			},
+		);
+
+		return response;
+	}
+	catch {
+		console.log(`❌ K8S API server is not reachable from Keyt container on host "${K8S_HOST}" and port "${K8S_PORT}".`);
+		console.log();
+		console.log('To find correct PORT, try to run:');
+		console.log('> kubectl cluster-info');
+		console.log('> kubectl config view --minify | grep server');
+		console.log('and pass it to Keyt as K8S_PORT environment variable.');
+
+		// eslint-disable-next-line no-process-exit, unicorn/no-process-exit
+		process.exit(1);
+	}
 }
 
 export async function setK8SResource(method_prefix, name, config) {
 	const method = `${method_prefix}/${name}`;
 
-	if (typeof DRY_RUN === 'string') {
+	if (DRY_RUN === '1') {
 		console.log(method);
-		console.log(YAML.stringify(config));
+		console.log(
+			YAML.stringify(config),
+		);
 		return;
 	}
 
@@ -119,7 +134,7 @@ export async function setK8SResource(method_prefix, name, config) {
 export async function deleteK8SResource(method_prefix, name) {
 	const method = `${method_prefix}/${name}`;
 
-	if (typeof DRY_RUN === 'string') {
+	if (DRY_RUN === '1') {
 		console.log(method);
 		return;
 	}
