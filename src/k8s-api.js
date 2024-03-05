@@ -74,13 +74,24 @@ export async function callAPI(method, path, body) {
 
 		return response;
 	}
-	catch {
-		console.log(`❌ K8S API server is not reachable from Keyt container on host "${K8S_HOST}" and port "${K8S_PORT}".`);
-		console.log();
-		console.log('To find correct PORT, try to run:');
-		console.log('> kubectl cluster-info');
-		console.log('> kubectl config view --minify | grep server');
-		console.log('and pass it to Keyt as K8S_PORT environment variable.');
+	catch (error) {
+		// console.log(error);
+		// console.log(error.code);
+
+		switch (error.code) {
+			case 'SELF_SIGNED_CERT_IN_CHAIN':
+				console.log('🙄 K8S API server is using self-signed TLS certificate.');
+				console.log('To avoid this error, you can set NODE_TLS_REJECT_UNAUTHORIZED=0 environment variable.');
+				console.log('However, it is not recommended for production use.');
+				break;
+			default:
+				console.log(`❌ K8S API server is not reachable from Keyt container on host "${K8S_HOST}" and port "${K8S_PORT}" (error code ${error.code}).`);
+				console.log();
+				console.log('To find correct PORT, try to run:');
+				console.log('> kubectl cluster-info');
+				console.log('> kubectl config view --minify | grep server');
+				console.log('and pass it to Keyt as K8S_PORT environment variable.');
+		}
 
 		// eslint-disable-next-line no-process-exit, unicorn/no-process-exit
 		process.exit(1);

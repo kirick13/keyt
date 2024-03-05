@@ -5,7 +5,7 @@ export default async function ping() {
 	const response = await callAPI('GET', 'ping');
 
 	if (response.ok) {
-		console.log('✅ K8S API server is up and running.');
+		console.log('✅ K8S API server is up and accessible.');
 		return;
 	}
 
@@ -21,4 +21,7 @@ export default async function ping() {
 	console.log(
 		await response.text(),
 	);
+
+	console.log();
+	console.log('🧐 Maybe you are running some K8S instance that does not support /ping API endpoint.');
 }
