@@ -79,6 +79,7 @@ export async function callAPI(method, path, body) {
 		// console.log(error.code);
 
 		switch (error.code) {
+			case 'UNABLE_TO_VERIFY_LEAF_SIGNATURE':
 			case 'SELF_SIGNED_CERT_IN_CHAIN':
 				console.log('🙄 K8S API server is using self-signed TLS certificate.');
 				console.log('To avoid this error, you can set NODE_TLS_REJECT_UNAUTHORIZED=0 environment variable.');
